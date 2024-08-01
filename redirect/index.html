@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta property="og:title" content="Download Full Movie">
+    <meta property="og:description" content="Visit to movies watch and download free">
+    <meta property="og:image" id="og-preview-image" content="">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
@@ -35,10 +39,11 @@
             const redirectUrl = urlParams.get('url');
             const previewImageUrl = urlParams.get('img');
             const previewImageElement = document.getElementById('preview-image');
+            const OgpreviewImageElement = document.getElementById('og-preview-image');
 
             if (redirectUrl && previewImageUrl) {
                 previewImageElement.src = previewImageUrl;
-
+                OgpreviewImageElement.content = previewImageUrl;
                 // Redirect as soon as the image is loaded
                 previewImageElement.onload = function() {
                     window.location.href = redirectUrl;
