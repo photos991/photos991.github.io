@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        #preview-image {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img id="preview-image" src="" alt="Preview Image">
+        <p>Redirecting to <span id="redirect-url"></span>...</p>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectUrl = urlParams.get('url');
+            const previewImageUrl = urlParams.get('img');
+            const previewImageElement = document.getElementById('preview-image');
+
+            if (redirectUrl && previewImageUrl) {
+                previewImageElement.src = previewImageUrl;
+
+                // Redirect as soon as the image is loaded
+                previewImageElement.onload = function() {
+                    window.location.href = redirectUrl;
+                };
+
+                // Handle image loading error
+                previewImageElement.onerror = function() {
+                    document.body.innerHTML = "<p>Failed to load the preview image. Redirecting...</p>";
+                    window.location.href = redirectUrl;
+                };
+            } else {
+                document.body.innerHTML = "<p>Invalid parameters provided. Please include both 'url' and 'img' parameters.</p>";
+            }
+        });
+    </script>
+</body>
+</html>
