@@ -1,1 +1,126 @@
-HI
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Page</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Yaldevi:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .news-item {
+            margin-bottom: 30px;
+            margin-top: 30px;
+        }
+        .news-image, .news-image-desktop {
+            width: 100%;
+            height: auto;
+            border-radius: 10px; /* Added border radius */
+        }
+        .news-title {
+            margin: 10px 0;
+        }
+        .news-content {
+            margin: 10px 0;
+        }
+        .news-content p {
+            margin: 0;
+        }
+        .news-date {
+            text-align: right;
+            font-size: 0.9em;
+            color: #888;
+        }
+        .news-link {
+            margin: 0;
+        }
+        .news-link:hover {
+            text-decoration: underline;
+        }
+        @media (min-width: 768px) {
+            .news-item-desktop {
+                display: flex;
+                align-items: flex-start;
+            }
+            .news-image-desktop {
+                width: 100%;
+                margin-right: 15px;
+            }
+            .news-content-desktop {
+                width: 70%;
+            }
+        }
+        .yaldevi-unique {
+            font-family: "Yaldevi", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400; /* Default weight, can be adjusted */
+            font-style: normal;
+        }
+    </style>
+</head>
+<body class="yaldevi-unique">
+    <div class="container">
+        <div id="newsContainer"></div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            Papa.parse('https://gavi-tharaka.github.io/news_data.csv', {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    console.log('Parsed Data:', results); // Log the results to verify the data structure
+                    var data = results.data;
+                    var newsContainer = $('#newsContainer');
+
+                    // Clear any existing content
+                    newsContainer.empty();
+
+                    data.forEach(function(row) {
+                        console.log('Row Data:', row); // Log each row's data to verify it's being accessed correctly
+                        
+                        if (row['News ID']) {
+                            var newsId = row['News ID'];
+                            var newsUrl = 'https://www.helakuru.lk/esana/news/' + newsId;
+                            var imageUrl = row['Image URL'] || ''; // Default to empty string if image_url is missing
+                            var title = row['Title'] || 'N/A';
+                            var content = row['Content'] || 'N/A';
+                            var date = row['Date'] || 'N/A';
+
+                            // Create news item HTML
+                            var newsItem = `
+                                <div class="news-item">
+                                    <div class="row news-item-desktop">
+                                        <div class="col-12 col-md-4">
+                                            <img src="${imageUrl}" class="news-image-desktop" alt="News Image">
+                                        </div>
+                                        <div class="col-12 col-md-8">
+                                            <h3 class="news-title">${title}</h3>
+                                            <div class="news-content">
+                                                <p>${content}<br><br><a href="${newsUrl}"class="btn btn-primary news-link">Read in Helakuru</a></p>
+                                            </div>
+                                            <div class="news-date">${date}</div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                </div>
+                            `;
+
+                            // Append the news item to the container
+                            newsContainer.append(newsItem);
+                        }
+                    });
+                },
+                error: function(error) {
+                    console.error('Error parsing CSV:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
