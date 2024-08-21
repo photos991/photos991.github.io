@@ -1,63 +1,250 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta property="og:title" content="Download Full Movie">
-    <meta property="og:description" content="Visit to movies watch and download free">
-    <meta property="og:image" id="og-preview-image" content="">
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting...</title>
+    <title>Frame Your Image</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #ffffff;
+            color: #333;
+            padding: 20px;
         }
-
-        .container {
-            text-align: center;
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            font-weight: 500;
+            color: #444;
         }
-
-        #preview-image {
+        #frame-container {
+            position: relative;
+            display: inline-block;
+            border: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
             max-width: 100%;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        canvas {
+            background-color: #fafafa;
+            width: 100%;
             height: auto;
+            aspect-ratio: 1 / 1 !important;
+        }
+        #frame-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            width: 100%;  
+            height: 100%;
+        }
+        #controls {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f8f8;
+            color: #333;
+            cursor: pointer;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        #zoom-slider {
+            width: 70%;
+            margin: 0 15px;
+        }
+        .btn {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #C4294A, #680241);
+            color: white;
+            border: none;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        @media (max-width: 600px) {
+            #zoom-slider {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <img id="preview-image" src="" alt="Preview Image">
-        <p>Redirecting to <span id="redirect-url"></span>...</p>
+    <div class="container text-center">
+        <h1>Frame Your Image</h1>
+        <input type="file" class="form-control-file" id="upload-image" accept="image/*">
+        <div id="frame-container">
+            <canvas id="canvas"></canvas>
+            <img id="frame-image" src="download (2).png" alt="Frame Image">
+        </div>
+        <div id="controls">
+            <div class="slider-container">
+                <label for="zoom-slider">Zoom</label>
+                <input type="range" id="zoom-slider" min="0.1" max="2" value="1" step="0.01">
+            </div>
+            <button id="download" class="btn">Download Framed Image</button>
+        </div>
     </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="FileSaver.min.js"></script>
+
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirectUrl = urlParams.get('url');
-            const previewImageUrl = urlParams.get('img');
-            const previewImageElement = document.getElementById('preview-image');
-            const OgpreviewImageElement = document.getElementById('og-preview-image');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const frameImage = document.getElementById('frame-image');
+        const uploadImage = document.getElementById('upload-image');
+        const downloadButton = document.getElementById('download');
+        const zoomSlider = document.getElementById('zoom-slider');
 
-            if (redirectUrl && previewImageUrl) {
-                previewImageElement.src = previewImageUrl;
-                OgpreviewImageElement.content = previewImageUrl;
-                // Redirect as soon as the image is loaded
-                previewImageElement.onload = function() {
-                    window.location.href = redirectUrl;
-                };
+        let img = new Image();
+        let imgX = 0, imgY = 0, scale = 1;
+        let imgWidth, imgHeight;
+        let isDragging = false;
+        let startX, startY;
 
-                // Handle image loading error
-                previewImageElement.onerror = function() {
-                    document.body.innerHTML = "<p>Failed to load the preview image. Redirecting...</p>";
-                    window.location.href = redirectUrl;
-                };
-            } else {
-                document.body.innerHTML = "<p>Invalid parameters provided. Please include both 'url' and 'img' parameters.</p>";
+        uploadImage.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                img.src = event.target.result;
+                img.onload = function() {
+                    scale = 1;
+                    zoomSlider.value = scale;
+                    imgWidth = img.width;
+                    imgHeight = img.height;
+                    centerImage();
+                    draw();
+                }
             }
+            reader.readAsDataURL(file);
         });
+
+        function centerImage() {
+            const aspectRatio = imgWidth / imgHeight;
+            const canvasAspectRatio = canvas.width / canvas.height;
+            if (aspectRatio > canvasAspectRatio) {
+                imgWidth = canvas.width * scale;
+                imgHeight = (canvas.width / aspectRatio) * scale;
+            } else {
+                imgHeight = canvas.height * scale;
+                imgWidth = (canvas.height * aspectRatio) * scale;
+            }
+            imgX = (canvas.width - imgWidth) / 2;
+            imgY = (canvas.height - imgHeight) / 2;
+        }
+
+        function startDrag(event) {
+            isDragging = true;
+            const rect = canvas.getBoundingClientRect();
+            startX = (event.clientX || event.touches[0].clientX) - rect.left;
+            startY = (event.clientY || event.touches[0].clientY) - rect.top;
+            event.preventDefault();
+        }
+
+        function endDrag() {
+            isDragging = false;
+        }
+
+        function dragImage(event) {
+            if (isDragging) {
+                const rect = canvas.getBoundingClientRect();
+                let currentX = (event.clientX || (event.touches ? event.touches[0].clientX : 0)) - rect.left;
+                let currentY = (event.clientY || (event.touches ? event.touches[0].clientY : 0)) - rect.top;
+                
+                const deltaX = currentX - startX;
+                const deltaY = currentY - startY;
+
+                imgX += deltaX;
+                imgY += deltaY;
+
+                startX = currentX;
+                startY = currentY;
+
+                draw();
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrag);
+        canvas.addEventListener('mouseup', endDrag);
+        canvas.addEventListener('mousemove', dragImage);
+        canvas.addEventListener('touchstart', startDrag);
+        canvas.addEventListener('touchend', endDrag);
+        canvas.addEventListener('touchmove', dragImage);
+
+        zoomSlider.addEventListener('input', () => {
+            scale = parseFloat(zoomSlider.value);
+            centerImage();
+            draw();
+        });
+
+        downloadButton.addEventListener('click', () => {
+            const downloadCanvas = document.createElement('canvas');
+            downloadCanvas.width = 1080;
+            downloadCanvas.height = 1080;
+            const downloadCtx = downloadCanvas.getContext('2d');
+
+            // Calculate the position and size of the image in the download canvas
+            const scaleFactor = 1080 / canvas.width;
+            const downloadImgX = imgX * scaleFactor;
+            const downloadImgY = imgY * scaleFactor;
+            const downloadImgWidth = imgWidth * scaleFactor;
+            const downloadImgHeight = imgHeight * scaleFactor;
+
+            downloadCtx.clearRect(0, 0, 1080, 1080);
+            downloadCtx.drawImage(img, downloadImgX, downloadImgY, downloadImgWidth, downloadImgHeight);
+            downloadCtx.drawImage(frameImage, 0, 0, 1080, 1080);
+
+            downloadCanvas.toBlob(function(blob) {
+                saveAs(blob, 'framed-image.png');
+            }, 'image/png');
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+            ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+        }
+
+        function resizeCanvas() {
+            const containerWidth = document.getElementById('frame-container').clientWidth;
+            canvas.width = containerWidth;
+            canvas.height = containerWidth;
+            centerImage();
+            draw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();  
     </script>
 </body>
 </html>
