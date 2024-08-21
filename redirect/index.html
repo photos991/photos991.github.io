@@ -1,8 +1,10 @@
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frame Your Image</title>
+    <title>NPP Matara</title>
     <!-- Bootstrap CSS -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -88,9 +90,18 @@
             transform: translateY(0);
             box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
         }
+        .toggle-buttons {
+            margin-bottom: 20px;
+        }
+        .toggle-buttons button {
+            margin: 0 10px;
+        }
         @media (max-width: 600px) {
             #zoom-slider {
                 width: 100%;
+            }
+            .toggle-buttons button {
+                margin: 5px;
             }
         }
     </style>
@@ -98,6 +109,12 @@
 <body>
     <div class="container text-center">
         <h1>Frame Your Image</h1>
+        <div class="nxl-container">
+        <lable> Please select frame language first:</lable>
+        <div class="toggle-buttons">
+            <button id="sinhala-btn" class="btn btn-light">Sinhala</button>
+            <button id="tamil-btn" class="btn btn-light">Tamil</button>
+        </div>
         <input type="file" class="form-control-file" id="upload-image" accept="image/*">
         <div id="frame-container">
             <canvas id="canvas"></canvas>
@@ -110,7 +127,9 @@
             </div>
             <button id="download" class="btn">Download Framed Image</button>
         </div>
+         </div>
     </div>
+   
 
     <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -131,6 +150,16 @@
         let imgWidth, imgHeight;
         let isDragging = false;
         let startX, startY;
+
+        document.getElementById('sinhala-btn').addEventListener('click', () => {
+            frameImage.src = 'AKD.png';
+            draw(); // Redraw the canvas with the new frame
+        });
+
+        document.getElementById('tamil-btn').addEventListener('click', () => {
+            frameImage.src = 'AKDTAMIL.png';
+            draw(); // Redraw the canvas with the new frame
+        });
 
         uploadImage.addEventListener('change', (e) => {
             const file = e.target.files[0];
